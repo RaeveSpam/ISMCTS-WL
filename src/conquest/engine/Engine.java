@@ -371,7 +371,6 @@ public class Engine {
 	private void executePlaceArmies()
 	{		
 		List<PlaceArmiesMove> legalMoves = new ArrayList<PlaceArmiesMove>();
-		
 		for(PlaceArmiesMove move : moveQueue.placeArmiesMoves)
 		{
 			if(move.getIllegalMove().equals("")) {
@@ -420,7 +419,6 @@ public class Engine {
 		while(moveQueue.hasNextAttackTransferMove())
 		{	
 			AttackTransferMove move = moveQueue.getNextAttackTransferMove(moveNr, previousMovePlayer, previousMoveWasIllegal);
-
 			if(move.getIllegalMove().equals("")) //the move is legal
 			{
 				RegionData fromRegion = move.getFromRegion();

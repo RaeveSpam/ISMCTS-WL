@@ -67,7 +67,7 @@ public class RunGame
 		/**
 		 * Optimize region circle positions for human controls.
 		 */
-		public boolean forceHumanVisualization = false;
+		public boolean forceHumanVisualization = true;
 		
 		public File replayLog = null;
 		
