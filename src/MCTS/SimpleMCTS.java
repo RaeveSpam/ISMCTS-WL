@@ -1,11 +1,13 @@
 package MCTS;
 
+
 import java.util.LinkedList;
 
+import MCTS.Determinization.Phase;
 import conquest.bot.BotState;
 import conquest.game.GameMap;
 import conquest.game.RegionData;
-import conquest.game.move.AttackTransferMove;
+
 import conquest.game.move.Move;
 
 public class SimpleMCTS {
@@ -16,25 +18,60 @@ public class SimpleMCTS {
 	GameMap visibleMap;
 	BotState state;
 	
-	public SimpleMCTS(BotState state, LinkedList<AttackTransferMove> plannedMoves){
+	private final LinkedList<Move> plannedMoves;
+	
+	public SimpleMCTS(BotState state, LinkedList<Move> plannedMoves){
 		this.state = state;
+		this.plannedMoves = plannedMoves;
 	}
 	
-	public AttackTransferMove getMove(LinkedList<AttackTransferMove> potentialMoves, int iterations){
-		
-		
+	public Move getMove(int iterations, Phase phase){
+		root = new Node(state.getMyPlayerName(), state.getMap().getMapCopy(), plannedMoves);
+		current = root;		
 		for(int i = 0; i < iterations; i++){
+			System.out.println("Iteration " + (i+1));
 			// run iteration
+			LinkedList<Edge> visitedEdges = new LinkedList<Edge>();
+			// determinization
+			System.out.println(plannedMoves.toString());
+			Determinization determ = new Determinization(state.getMap(), plannedMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber());
+			determ.determinize(phase);
 			
-			// determination
-			// selection
-			// expansion
-			// simulation
+			do{
+				//System.out.println(determ.roundNumber);
+				// selection / expansion
+				current.setDeterminization(determ);
+				Edge currentEdge = current.getEdge();
+				visitedEdges.add(currentEdge);
+				
+				// simulation
+				if(currentEdge.pass){
+					//System.out.println(currentEdge.player + " passes");
+					determ.passMove(currentEdge.player);
+				} else {
+					determ.playOutMove(currentEdge.move);
+				}
+				current = currentEdge.getNode();
+			} while(!determ.isTerminal());
+			
 			// backpropogate
+			String winner = determ.getWinner();
+			for(Edge e : visitedEdges){
+				e.backPropogate(winner);
+			}
 		}
-		
-		// result = root.getbest
-		return null;
+		Edge best = null;
+		Double score = 0.0;
+		//System.out.println(root.edges.size());
+		for(Edge e : root.edges){
+			if(e.getUCBScore() > score){
+				best = e;
+			}
+		}
+		if(best == null) {
+			return null;
+		}
+		return best.move;
 	}
 	
 	private GameMap formatMap(GameMap map){

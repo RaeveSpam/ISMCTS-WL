@@ -76,28 +76,10 @@ public class BotStarter implements Bot
 
 		LinkedList<RegionData> visibleRegions = state.getMap().getRegions();
 		LinkedList<RegionData> allRegions = state.getFullMap().getRegions();
-		
-		System.out.println(state.getMap().getRegion(1).getId());
-		
-		System.out.println("XXX");
 		//System.out.println(visibleRegions.toString());
 		
 		
 		GameMap map = state.getMap();
-		
-		for(RegionData r : map.getRegions()){
-			if(r.ownedByPlayer(myName)){
-				System.out.println(r);
-				placeArmiesMoves.add(new PlaceArmiesMove(myName, r, 1));
-				placeArmiesMoves.add(new PlaceArmiesMove(myName, r, 1));
-				placeArmiesMoves.add(new PlaceArmiesMove(myName, r, 1));
-				placeArmiesMoves.add(new PlaceArmiesMove(myName, r, 1));
-				placeArmiesMoves.add(new PlaceArmiesMove(myName, r, 1));
-				armiesLeft -= 5;
-				break;
-			}
-		}
-	
 		
 		
 		while(armiesLeft > 0)

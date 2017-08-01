@@ -10,25 +10,29 @@ public class Node {
 	public int wins = 0;
 	public int visits = 0;
 	
-	public String player;
-
-	public String opponent;
+	public String player = "unknown";
 	
 	public GameMap map; // Base state
 	
-	public int roundNumber;
-	
 	LinkedList<Move> previousMoves; // Uncertainty defining the InformationSet
 	
-	LinkedList<Edge> edges; // all possible edges originating from this InformationSet
+	LinkedList<Edge> edges = new LinkedList<Edge>();; // all possible edges originating from this InformationSet
 	
 	LinkedList<Edge> availableEdges;
 	
 	Determinization determ;
 	
-	public Node(String player, String opponent, GameMap knownMap, LinkedList<Move> previousMoves){
+	public Node(Node previousNode, Edge previousEdge){
+		map = previousNode.map.getMapCopy();
+		previousMoves = new LinkedList<Move>();
+		previousMoves.addAll(previousNode.previousMoves);
+		previousMoves.add(previousEdge.move);
+		availableEdges = new LinkedList<Edge>();
+		determ = null;
+	}
+	
+	public Node(String player, GameMap knownMap, LinkedList<Move> previousMoves){
 		this.player = player;
-		this.opponent = opponent;
 		map = knownMap;
 		this.previousMoves = previousMoves;
 		availableEdges = new LinkedList<Edge>();
@@ -39,7 +43,9 @@ public class Node {
 		determ = d;
 	}
 	
-	
+	public LinkedList<Move> getPreviousMoves(){
+		return previousMoves;
+	}
 	
 	/**
 	 * MCTS step
@@ -50,23 +56,14 @@ public class Node {
 			throw new NullPointerException("No determinization available");
 		}
 		Edge result = null;
-		availableEdges = determ.getAvailableEdges(player);
-		//TODO do some magic to use existing edges
+		availableEdges = getRealEdges(determ.getAvailableEdges(this));
 		
-		
-		if(availableEdges.size() == 0){
-			// no moves are available - Pass
-			result =  new PassEdge(player, null);
-			edges.add(result);
-			result.available++;
+		if(isFullyExpanded()){
+			// select
+			result = getSelectionEdge();
 		} else {
-			if(isFullyExpanded()){
-				// select
-				result = getSelectionEdge();
-			} else {
-				// expansion
-				result = getExpansionEdge();
-			}
+			// expansion
+			result = getExpansionEdge();
 		}
 		if(result == null){
 			throw new NullPointerException("What the damn hell? No Edge found");
@@ -139,12 +136,18 @@ public class Node {
 		throw new NullPointerException("No selection edge found WTF");
 	}
 	
-	private void addEdges(LinkedList<Edge> newEdges){
+	private LinkedList<Edge> getRealEdges(LinkedList<Edge> newEdges){
+		LinkedList<Edge> result = new LinkedList<Edge>();
 		for(Edge e : newEdges){
 			if(!edges.contains(e)){
 				edges.add(e);
+				result.add(e);
+			} else {
+				int index = edges.indexOf(e);
+				result.add(edges.get(index));
 			}
 		}
+		return result;
 	}
 	
 	public void backPropogation(String winner){

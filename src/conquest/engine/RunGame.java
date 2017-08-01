@@ -679,7 +679,7 @@ public class RunGame
 	{	
 		Config config = new Config();
 		
-		config.bot1Init = "internal:conquest.bot.BotStarter";
+		config.bot1Init = "internal:conquest.bot.SimpleMCTSBot";
 		//config.bot1Init = "human";
 		config.bot2Init = "internal:conquest.bot.BotStarter";
 		//config.bot2Init = "process:java -cp bin conquest.bot.BotStarter";

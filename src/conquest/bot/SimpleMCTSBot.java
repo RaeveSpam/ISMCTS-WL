@@ -3,8 +3,11 @@ package conquest.bot;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
+import MCTS.SimpleMCTS;
+import MCTS.Determinization.Phase;
 import conquest.game.RegionData;
 import conquest.game.move.AttackTransferMove;
+import conquest.game.move.Move;
 import conquest.game.move.PlaceArmiesMove;
 import conquest.view.GUI;
 
@@ -82,6 +85,26 @@ public class SimpleMCTSBot implements Bot {
 	public ArrayList<AttackTransferMove> getAttackTransferMoves(BotState state, Long timeOut) 
 	{
 		ArrayList<AttackTransferMove> attackTransferMoves = new ArrayList<AttackTransferMove>();
+		LinkedList<Move> plannedMoves = new LinkedList<Move>();
+		
+		
+		/*plannedMoves.add(move);
+		AttackTransferMove result = (AttackTransferMove)move;
+		result.setArmies(result.getFromRegion().getArmies()-1);
+		attackTransferMoves.add(result);*/
+		Move move = null;
+		do {
+			SimpleMCTS mcts = new SimpleMCTS(state, plannedMoves);
+			move = mcts.getMove(5, Phase.AttackTransfer);
+			if(move != null){
+				plannedMoves.add(move);
+				AttackTransferMove result = (AttackTransferMove)move;
+				result.setArmies(result.getFromRegion().getArmies()-1);
+				attackTransferMoves.add(result);
+			}
+			} while(move != null);
+	
+		/*
 		String myName = state.getMyPlayerName();
 		int armies = 5;
 		
@@ -113,7 +136,7 @@ public class SimpleMCTSBot implements Bot {
 				}
 			}
 		}
-		
+		*/
 		return attackTransferMoves;
 	}
 
@@ -146,7 +169,7 @@ public class SimpleMCTSBot implements Bot {
 	
 	public static void main(String[] args)
 	{
-		BotParser parser = new BotParser(new BotStarter());
+		BotParser parser = new BotParser(new SimpleMCTSBot());
 		//parser.setLogFile(new File("./BotStarter.log"));
 		parser.run();
 	}

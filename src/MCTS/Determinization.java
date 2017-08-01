@@ -20,38 +20,138 @@ public class Determinization {
 	LinkedList<Move> previousMoves;
 	Random random;
 	int PLACEARMIESMOVES = 5;
-	String player1;
-	String player2;
-	LinkedList<Integer> player1deployments;
-	LinkedList<Integer> player2deployments;
 	
-	public Determinization(GameMap map, LinkedList<Move> plannedMoves, String myName, String opponentName){
+	PlayerData player1;
+	PlayerData player2;	
+	
+	Node rootNode;
+	
+	Phase currentPhase;
+	
+	int roundNumber = 0;
+	
+	String currentPlayer = null;
+	String nextPlayer = null;
+	
+	public enum Phase {
+		PlaceArmies, AttackTransfer
+	}
+	
+	public Determinization(GameMap map, LinkedList<Move> plannedMoves, String myName, String opponentName, int roundNumber){
 		this.previousMoves = plannedMoves;
 		baseMap = map.getMapCopy();
 		determinedMap = map.getMapCopy();
 		random = new Random();
-		player1 = myName;
-		player2 = opponentName;
+		
+		player1 = new PlayerData(myName);
+		player2 = new PlayerData(opponentName);
+
+		rootNode = new Node(myName, map, new LinkedList<>());
+		this.roundNumber = roundNumber;
 	}
 	
 	/**
 	 * Determinization step
 	 */
-	public void determinize(){
+	public void determinize(Phase phase){
 		// roll out previous moves
-		// 
-		// determinedMap = baseMap.getMapCopy();
-		// get available enemy moves
-		// while previous.notEmpty
-		// 		Choose order 
-		//		p1 move  | p2 move
-		//		p2 move  | p1 move
-		//		update determined map
+		determinedMap = baseMap.getMapCopy();
+		currentPhase = phase;
+		if(currentPhase == Phase.AttackTransfer){
+			player2.attackTransferMoves = getAvailableAttackTransferMoves(player2.name);
+			player1.attackTransferMoves = getAvailableAttackTransferMoves(player1.name);
+			//System.out.println(player1.name);
+			//System.out.println(player1.attackTransferMoves.size());
+		} else if(currentPhase == Phase.PlaceArmies){
+			updateDeployments();
+			player1.placeArmiesMoves = getPossiblePlaceArmiesMoves(player1.name);
+			player2.placeArmiesMoves = getPossiblePlaceArmiesMoves(player2.name);
+		}
+		// random previous turns
+		while(!previousMoves.isEmpty()){
+			String[] order = getOrder();
+			for(int i = 0; i < order.length; i++){
+				
+				if(order[i] == player1.name){
+					playOutMove(previousMoves.pollFirst());
+				} else {
+					// get random enemy move
+					if(currentPhase == Phase.AttackTransfer){
+						if(player2.attackTransferMoves.size() > 1){
+							int index = random.nextInt(player2.attackTransferMoves.size());
+							playOutMove(player2.attackTransferMoves.get(index));
+						}					
+					} else {
+						if(player2.placeArmiesMoves.size() > 1){
+							int index = random.nextInt(player2.placeArmiesMoves.size());
+							playOutMove(player2.placeArmiesMoves.get(index));
+						}
+					}
+				}
+			}
+		}
+		if(getOrder()[0] == player2.name){
+			// get random enemy move
+			if(currentPhase == Phase.AttackTransfer){
+				int index = random.nextInt(player2.attackTransferMoves.size());
+				playOutMove(player2.attackTransferMoves.get(index));					
+			} else {
+				int index = random.nextInt(player2.placeArmiesMoves.size());
+				playOutMove(player2.placeArmiesMoves.get(index));
+			}
+		}
 	}
 	
+	public String[] getOrder(){
+		if(random.nextBoolean()){
+			return new String[]{player1.name, player2.name};
+		} else {
+			return new String[]{player2.name, player1.name};
+		}
+	}
 	
+	private PlayerData getPlayerData(String player){
+		if(player == player1.name){
+			return player1;
+		} else if(player == player2.name){
+			return player2;
+		}
+		throw new NullPointerException("Unknown player");
+	}
 	
-	public void PlayOutMove(Move move){
+	private Phase getCurrentPhase(){
+		if(currentPhase == Phase.PlaceArmies){
+			if(player1.deployments.isEmpty() && player2.deployments.isEmpty()){
+				// new attack transfer phase
+				currentPhase = Phase.AttackTransfer;
+				player1.attackTransferMoves = getAvailableAttackTransferMoves(player1.name);
+				player2.attackTransferMoves = getAvailableAttackTransferMoves(player2.name);
+				
+			}
+		} else if(currentPhase == Phase.AttackTransfer){
+			if(player1.hasPassed && player2.hasPassed){
+				// New Place armies phase & and new round
+				roundNumber++;
+				currentPhase = Phase.PlaceArmies;
+				player1.hasPassed = false;
+				player1.hasPassed = false;
+				player1.placeArmiesMoves = getPossiblePlaceArmiesMoves(player1.name);
+				player2.placeArmiesMoves = getPossiblePlaceArmiesMoves(player2.name);
+			}
+		}
+		//System.out.println(currentPhase);
+		return currentPhase;
+	}
+	
+	public void passMove(String player){
+		getPlayerData(player).hasPassed = true;
+	}
+	
+	/**
+	 * Step determinization forward
+	 * @param move
+	 */
+	public void playOutMove(Move move){
 		if(move.getClass() == PlaceArmiesMove.class){
 			// add armies to region
 			int region = ((PlaceArmiesMove)move).getRegion().getId();
@@ -80,6 +180,18 @@ public class Determinization {
 	 * @return Resulting map from the simulation.
 	 */
 	public void playOutChanceMove(AttackTransferMove move){
+		// remove moves from available moves
+		LinkedList<Move> moves = getPlayerData(move.getPlayerName()).attackTransferMoves;
+		
+		LinkedList<Move> updated = new LinkedList<Move>();
+		for(Move m : getPlayerData(move.getPlayerName()).attackTransferMoves){
+			
+			if(((AttackTransferMove)m).getFromRegion().getId() != move.getFromRegion().getId()){
+				updated.add(m);
+			}
+		}
+		//System.out.println(moves.size() + "    " + updated.size());
+		getPlayerData(move.getPlayerName()).attackTransferMoves = updated;
 		// random roll determine result
 		RegionData fromRegion = determinedMap.getRegion(move.getFromRegion().getId());
 		RegionData toRegion = determinedMap.getRegion(move.getToRegion().getId());
@@ -117,7 +229,7 @@ public class Determinization {
 		determinedMap = result;
 	}
 	
-	public LinkedList<Move> getavailableAttackTransferMoves(String player){
+	public LinkedList<Move> getAvailableAttackTransferMoves(String player){
 		LinkedList<Move> result = new LinkedList<Move>();
 		for(RegionData fromRegion : baseMap.getRegions()){
 			if(fromRegion.ownedByPlayer(player) && fromRegion.getArmies() > 1){
@@ -126,19 +238,15 @@ public class Determinization {
 				}
 			}
 		}
+		//System.out.println(player + " " + result.size());
 		return result;
 	}
 	
 	public int getDeployment(String player){
-		if(player1deployments.size() < 1 || player2deployments.size() < 1){
+		if(player1.deployments.size() < 1 || player2.deployments.size() < 1){
 			updateDeployments();
 		}
-		if(player == player1){
-			return player1deployments.pollFirst();
-		} else if(player == player2){
-			return player1deployments.pollFirst();
-		}
-		throw new NullPointerException("Wrong motherfucking player");
+		return getPlayerData(player).deployments.pollFirst();
 	}
 	
 	private void updateDeployments(){
@@ -146,8 +254,8 @@ public class Determinization {
 		updatePlayerDeployment(player2);
 	}
 	
-	private void updatePlayerDeployment(String player){
-		int armies = getArmiesPerTurn(player);
+	private void updatePlayerDeployment(PlayerData player){
+		int armies = getArmiesPerTurn(player.name);
 		int[] deployments = new int[] {0, 0, 0, 0, 0};
 		int i = 0;
 		while(armies > 0){
@@ -155,23 +263,14 @@ public class Determinization {
 			deployments[i]++;
 			i++;
 		}
-		if(player == player1){
-			player1deployments = new LinkedList<Integer>();
-			for(Integer d : deployments){
-				player1deployments.add(d);
-			}
-		}
-		if(player == player2){
-			player2deployments = new LinkedList<Integer>();
-			for(Integer d : deployments){
-				player2deployments.add(d);
-			}
-		}
-		
+		player.deployments = new LinkedList<Integer>();
+		for(Integer d : deployments){
+			player.deployments.add(d);
+		}		
 	}
 	
-	public LinkedList<PlaceArmiesMove> getPossiblePlaceArmiesMoves(String player){
-		LinkedList<PlaceArmiesMove> result = new LinkedList<PlaceArmiesMove>();
+	public LinkedList<Move> getPossiblePlaceArmiesMoves(String player){
+		LinkedList<Move> result = new LinkedList<Move>();
 		for(RegionData r : determinedMap.getRegions()){
 			if(r.ownedByPlayer(player)){
 				result.add(new PlaceArmiesMove(player, r, 0));
@@ -180,31 +279,82 @@ public class Determinization {
 		return result;
 	}
 	
-	public LinkedList<Edge> getAvailableEdges(String player){
-		// identify whether it is an attackTransfer or place move
+	
+	public LinkedList<Edge> getAvailableEdges(Node node){
 		
-		return null; //getavailableAttackTransferMoves(player);
+		getCurrentPhase();
+
+		if(node.player == "unknown"){
+			if(currentPlayer == null){
+				String[] ord = getOrder();
+				currentPlayer = ord[0];
+				nextPlayer = ord[1];
+			}
+		} else {
+			currentPlayer = node.player;
+			nextPlayer = null;
+		}
+		LinkedList<Edge> result = new LinkedList<Edge>();
+		LinkedList<Move> moves = new LinkedList<Move>();
+		
+		if(currentPhase == Phase.PlaceArmies){
+			moves = getPlayerData(currentPlayer).placeArmiesMoves; 		//getPossiblePlaceArmiesMoves(currentPlayer);
+		} else if(currentPhase == Phase.AttackTransfer){
+			moves = getPlayerData(currentPlayer).attackTransferMoves; 	//getAvailableAttackTransferMoves(currentPlayer);
+		}
+		//System.out.println(moves.size());
+		for(Move m : moves){
+			result.add(new Edge(currentPlayer, m, node));
+		}
+		if(result.size() == 0){
+			result.add(new PassEdge(currentPlayer, null, node));
+		}
+		currentPlayer = nextPlayer;
+		nextPlayer = null;
+		
+		return result;
 	}
 	
-	// FIgure out how this works pl0x 
-	public boolean isTerminal(Node node){
-			if(node.roundNumber > 100){
-				return true;
-			}
-			boolean playerLives = false;
-			boolean opponentLives = false;
-			for(RegionData r : node.map.getRegions()){
-				if(playerLives && opponentLives){
-					return false;
-				}
-				if(r.ownedByPlayer(node.player)){
-					playerLives = true;
-				} else if(r.ownedByPlayer(node.opponent)){
-					opponentLives = true;
-				}
-			}
+	public boolean isTerminal(){
+		getCurrentPhase();
+		if(roundNumber > 100){
 			return true;
 		}
+		boolean player1Lives = false;
+		boolean plsyer2Lives = false;
+		for(RegionData r : determinedMap.getRegions()){
+			if(r.ownedByPlayer(player1.name)){
+				player1Lives = true;
+			} else if(r.ownedByPlayer(player2.name)){
+				plsyer2Lives = true;
+			}
+			if(player1Lives && plsyer2Lives){
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public String getWinner(){
+		int player1regions = 0;
+		int player2regions = 0;
+		
+		for(RegionData r : determinedMap.getRegions()){
+			if(r.ownedByPlayer(player1.name)){
+				player1regions++;
+			} else if(r.ownedByPlayer(player2.name)){
+				player2regions++;
+			}
+		}
+		if(player1regions == 0){
+			return player2.name;
+		}
+		
+		if(player2regions == 0){
+			return player1.name;
+		}
+		return "none";
+	}
 	
 	private int[] simulateAttack(int defenders, int attackers){
 		int[] result = new int[] {defenders, attackers};

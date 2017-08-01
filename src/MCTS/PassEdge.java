@@ -4,8 +4,8 @@ import conquest.game.move.Move;
 
 public class PassEdge extends Edge {
 		
-	public PassEdge(String player, Move move) {
-		super(player, move);
+	public PassEdge(String player, Move move, Node previousNode) {
+		super(player, move, previousNode);
 		pass = true;
 		// TODO Auto-generated constructor stub
 	}

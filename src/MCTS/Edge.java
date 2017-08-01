@@ -1,25 +1,25 @@
 package MCTS;
 
-import java.util.LinkedList;
-
-import conquest.game.GameMap;
-import conquest.game.move.AttackTransferMove;
 import conquest.game.move.Move;
 
 public class Edge {
+	private Double C = 1.41;
 	protected int wins;
 	protected int visits;
 	protected int available;
 	public String player;
-	protected LinkedList<Node> nodes;
+	private Node nextNode;
 	public Move move;
 	public boolean pass;
+	private Node previousNode;
 	
-	public Edge(String player, Move move){
+	public Edge(String player, Move move, Node previousNode){
 		this.player = player;
 		this.move = move;
+		this.previousNode = previousNode;
 		pass = false;
-		nodes = new LinkedList<Node>();
+		
+	
 	}
 	
 	@Override
@@ -42,7 +42,21 @@ public class Edge {
 		}
 	}
 	
+	public Node getNode(){
+		if(nextNode == null){
+			nextNode = new Node(previousNode, this);
+		}
+		return nextNode;
+	}
+	
 	public double getUCBScore(){
-		return 0.0;
+		if(visits == 0 || available == 0){
+			return Double.MIN_VALUE;
+		}
+		double w = wins;
+		double n = visits;
+		double a = available;
+		
+		return w/n + C * Math.sqrt(Math.log(a)/n);
 	}
 }
