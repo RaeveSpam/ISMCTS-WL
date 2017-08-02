@@ -25,11 +25,10 @@ public class Edge {
 	@Override
 	public boolean equals(Object o){
 		//System.out.println("*** Edge equals ***");
+		
 		if(o.getClass().equals(Edge.class)){
 			boolean result = ComparatorHelper.compareMove(move, ((Edge)o).move);
-			if(result){
-				System.out.println("Existing Edge! Wooo~~");
-			}
+			//System.out.println(result);
 			return result;
 		}
 		return false;
@@ -51,12 +50,11 @@ public class Edge {
 	
 	public double getUCBScore(){
 		if(visits == 0 || available == 0){
-			return Double.MIN_VALUE;
+			return Double.NEGATIVE_INFINITY;
 		}
 		double w = wins;
 		double n = visits;
 		double a = available;
-		
 		return w/n + C * Math.sqrt(Math.log(a)/n);
 	}
 }

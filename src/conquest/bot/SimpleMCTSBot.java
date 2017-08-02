@@ -11,7 +11,13 @@ import conquest.game.move.Move;
 import conquest.game.move.PlaceArmiesMove;
 import conquest.view.GUI;
 
+
+
 public class SimpleMCTSBot implements Bot {
+	private SimpleMCTS mcts = null;
+	
+	private int ITERATIONS = 20;
+	
 	/**
 	 * A method used at the start of the game to decide which player start with what Regions. 6 Regions are required to be returned.
 	 * This example randomly picks 6 regions from the pickable starting Regions given by the engine.
@@ -20,6 +26,8 @@ public class SimpleMCTSBot implements Bot {
 	@Override
 	public ArrayList<RegionData> getPreferredStartingRegions(BotState state, Long timeOut)
 	{
+		//Runtime runtime = Runtime.getRuntime();
+		//System.out.println(runtime.maxMemory());
 		int m = 6;
 		ArrayList<RegionData> preferredStartingRegions = new ArrayList<RegionData>();
 		for(int i=0; i<m; i++)
@@ -49,30 +57,37 @@ public class SimpleMCTSBot implements Bot {
 	 */
 	@Override
 	public ArrayList<PlaceArmiesMove> getPlaceArmiesMoves(BotState state, Long timeOut) 
-	{
-		
+	{		
 		ArrayList<PlaceArmiesMove> placeArmiesMoves = new ArrayList<PlaceArmiesMove>();
 		String myName = state.getMyPlayerName();
-		int armies = 2;
+		LinkedList<Integer> armies = new LinkedList<Integer>();
 		int armiesLeft = state.getStartingArmies();
-		LinkedList<RegionData> visibleRegions = state.getMap().getRegions();
-		LinkedList<RegionData> allRegions = state.getFullMap().getRegions();
-		System.out.println("Visible regions " + visibleRegions.size());
-		System.out.println("lålålå");
-		//System.out.println(("unknown" == allRegions.get(0).getPlayerName()));
-		while(armiesLeft > 0)
-		{
-			double rand = Math.random();
-			int r = (int) (rand*visibleRegions.size());
-			RegionData region = visibleRegions.get(r);
-			
-			if(region.ownedByPlayer(myName))
-			{
-				placeArmiesMoves.add(new PlaceArmiesMove(myName, region, Math.min(armiesLeft, armies)));
-				armiesLeft -= armies;
-			}
+		int moves = 5;
+		int[] deployments = new int[] {0, 0, 0, 0, 0};
+		int index = 0;
+		while(armiesLeft > 0){
+			index %=moves;
+			deployments[index]++;
+			index++;
+			armiesLeft--;
 		}
 		
+		for(Integer d : deployments){
+			armies.add(d);
+		}		
+		LinkedList<Move> plannedMoves = new LinkedList<Move>();
+		for(int i = 0; i < moves; i++){
+			System.out.println("Get place move");
+			mcts = new SimpleMCTS(state, plannedMoves);
+			Move move = mcts.getMove(ITERATIONS, Phase.PlaceArmies);
+			mcts = null;
+			if(move != null){
+				plannedMoves.add(move);
+				PlaceArmiesMove result = (PlaceArmiesMove)move;
+				result.setArmies(armies.pollFirst());
+				placeArmiesMoves.add(result);
+			}
+		}		
 		return placeArmiesMoves;
 	}
 	
@@ -86,64 +101,26 @@ public class SimpleMCTSBot implements Bot {
 	{
 		ArrayList<AttackTransferMove> attackTransferMoves = new ArrayList<AttackTransferMove>();
 		LinkedList<Move> plannedMoves = new LinkedList<Move>();
-		
-		
-		/*plannedMoves.add(move);
-		AttackTransferMove result = (AttackTransferMove)move;
-		result.setArmies(result.getFromRegion().getArmies()-1);
-		attackTransferMoves.add(result);*/
 		Move move = null;
+		int i = 3;
 		do {
-			SimpleMCTS mcts = new SimpleMCTS(state, plannedMoves);
-			move = mcts.getMove(5, Phase.AttackTransfer);
+			
+			mcts = new SimpleMCTS(state, plannedMoves);
+			move = mcts.getMove(ITERATIONS, Phase.AttackTransfer);
+			mcts = null;
 			if(move != null){
 				plannedMoves.add(move);
 				AttackTransferMove result = (AttackTransferMove)move;
 				result.setArmies(result.getFromRegion().getArmies()-1);
 				attackTransferMoves.add(result);
 			}
-			} while(move != null);
-	
-		/*
-		String myName = state.getMyPlayerName();
-		int armies = 5;
-		
-		for(RegionData fromRegion : state.getMap().getRegions())
-		{
-			if(fromRegion.ownedByPlayer(myName)) //do an attack
-			{
-				ArrayList<RegionData> possibleToRegions = new ArrayList<RegionData>();
-				possibleToRegions.addAll(fromRegion.getNeighbors());
-				
-				while(!possibleToRegions.isEmpty())
-				{
-					double rand = Math.random();
-					int r = (int) (rand*possibleToRegions.size());
-					RegionData toRegion = possibleToRegions.get(r);
-					
-					if(!toRegion.getPlayerName().equals(myName) && fromRegion.getArmies() > 6) //do an attack
-					{
-						attackTransferMoves.add(new AttackTransferMove(myName, fromRegion, toRegion, armies));
-						break;
-					}
-					else if(toRegion.getPlayerName().equals(myName) && fromRegion.getArmies() > 1) //do a transfer
-					{
-						attackTransferMoves.add(new AttackTransferMove(myName, fromRegion, toRegion, armies));
-						break;
-					}
-					else
-						possibleToRegions.remove(toRegion);
-				}
-			}
-		}
-		*/
+			i--;
+		} while(move != null && i > 0);
 		return attackTransferMoves;
 	}
-
-	public LinkedList<RegionData> getBoard(BotState state, LinkedList<AttackTransferMove> plannedMoves){
-		
-		return null;
-	}
+	
+	
+	
 	
 	public LinkedList<AttackTransferMove> getPotentialMoves(BotState state){
 		String myName = state.getMyPlayerName();

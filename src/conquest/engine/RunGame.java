@@ -62,12 +62,12 @@ public class RunGame
 		public String bot1Init;
 		public String bot2Init;
 		
-		public boolean visualize = true;
+		public boolean visualize = false;
 		
 		/**
 		 * Optimize region circle positions for human controls.
 		 */
-		public boolean forceHumanVisualization = true;
+		public boolean forceHumanVisualization = false;
 		
 		public File replayLog = null;
 		
@@ -690,10 +690,10 @@ public class RunGame
 		config.engine.maxGameRounds = 100;
 		
 		// visualize the map, if turned off, the simulation would run headless 
-		config.visualize = true;
+		config.visualize = false;
 		
 		// if false, not all human controls would be accessible (when hijacking bots via 'H' or 'J')
-		config.forceHumanVisualization = true;   
+		config.forceHumanVisualization = false;   
 		
 		config.replayLog = new File("./replay.log");
 		

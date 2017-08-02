@@ -31,13 +31,17 @@ public class SimpleMCTS {
 		for(int i = 0; i < iterations; i++){
 			System.out.println("Iteration " + (i+1));
 			// run iteration
+			current = root;
 			LinkedList<Edge> visitedEdges = new LinkedList<Edge>();
 			// determinization
-			System.out.println(plannedMoves.toString());
-			Determinization determ = new Determinization(state.getMap(), plannedMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber());
+			LinkedList<Move> previousMoves = new LinkedList<Move>();
+			for(Move m : plannedMoves){
+				previousMoves.add(m);
+			}
+			Determinization determ = new Determinization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber());
 			determ.determinize(phase);
-			
 			do{
+				
 				//System.out.println(determ.roundNumber);
 				// selection / expansion
 				current.setDeterminization(determ);
@@ -49,8 +53,10 @@ public class SimpleMCTS {
 					//System.out.println(currentEdge.player + " passes");
 					determ.passMove(currentEdge.player);
 				} else {
+					
 					determ.playOutMove(currentEdge.move);
 				}
+				
 				current = currentEdge.getNode();
 			} while(!determ.isTerminal());
 			
@@ -60,18 +66,18 @@ public class SimpleMCTS {
 				e.backPropogate(winner);
 			}
 		}
-		Edge best = null;
-		Double score = 0.0;
-		//System.out.println(root.edges.size());
-		for(Edge e : root.edges){
-			if(e.getUCBScore() > score){
-				best = e;
-			}
-		}
-		if(best == null) {
-			return null;
-		}
-		return best.move;
+		
+		Move best = root.getBestEdge(state.getMyPlayerName()).move;
+		deconstruct();
+		//System.out.println(best.wins);
+		return best;
+	}
+	
+	private void deconstruct(){
+		root = null;
+		current = null;
+		visibleMap = null;
+		state = null;
 	}
 	
 	private GameMap formatMap(GameMap map){
@@ -109,34 +115,7 @@ public class SimpleMCTS {
 		}
 		return result;
 	}
-	
-	private void determinization(){
-		// determine unknown
-		
-		// determine map - Simple see all
-		
-		// determine planned moves
-		
-	}
-	
-	private Edge selection(){
-		// get available edges
-		
-		// UCB
-		
-		return null;
-	}
-	private void expansion(){
-		
-	}
-	
-	private void simulation(){
-		
-	}
-	
-	private void backPropagation(){
-		
-	}
+
 	
 	/**
 	 * @param first

@@ -23,7 +23,7 @@ public class Node {
 	Determinization determ;
 	
 	public Node(Node previousNode, Edge previousEdge){
-		map = previousNode.map.getMapCopy();
+		map = previousNode.map;
 		previousMoves = new LinkedList<Move>();
 		previousMoves.addAll(previousNode.previousMoves);
 		previousMoves.add(previousEdge.move);
@@ -52,12 +52,17 @@ public class Node {
 	 * @return
 	 */
 	public Edge getEdge(){
+		visits++;
 		if(determ == null){
 			throw new NullPointerException("No determinization available");
 		}
 		Edge result = null;
-		availableEdges = getRealEdges(determ.getAvailableEdges(this));
-		
+		availableEdges = determ.getAvailableEdges(this);
+		if(edges.size() == 0 && visits == 1){
+			// simulation
+			return simulation();
+		}
+		availableEdges = getRealEdges(availableEdges);
 		if(isFullyExpanded()){
 			// select
 			result = getSelectionEdge();
@@ -65,6 +70,7 @@ public class Node {
 			// expansion
 			result = getExpansionEdge();
 		}
+		
 		if(result == null){
 			throw new NullPointerException("What the damn hell? No Edge found");
 		}
@@ -75,19 +81,42 @@ public class Node {
 		return result;
 	}
 	
-	public void setAvailableMoves(LinkedList<Edge> moves){
-		// To some extent expansion step
-		availableEdges = moves;
+	public Edge getBestEdge(String player){
+		LinkedList<Edge> bestEdges = new LinkedList<Edge>();
+		double score = Double.NEGATIVE_INFINITY;
+		for(Edge e : edges){
+			if(e.player == player){
+				double escore = e.getUCBScore();
+				if(escore > score){
+					bestEdges = new LinkedList<Edge>();
+					bestEdges.add(e);
+					score = escore;
+				} else if(escore == score){
+					bestEdges.add(e);
+				}
+			}
+		}
+		Random random = new Random();
+		
+		return bestEdges.get(random.nextInt(bestEdges.size()));
+	}
+	
+	private Edge simulation(){
+		Random random = new Random();
+		return availableEdges.get(random.nextInt(availableEdges.size()));
 	}
 	
 	private boolean isFullyExpanded(){
 		// check that every available edge has been visited at least once
+		if(availableEdges.size() == 0){
+			return false;
+		}
 		for(Edge e : availableEdges){
 			if(e.visits < 1){
 				return false;
 			}
 		}
-		return false;
+		return true;
 	}
 	
 	/**
@@ -95,15 +124,16 @@ public class Node {
 	 * @return
 	 */
 	public Edge getSelectionEdge(){
-		double bestScore = 0.0;
+		double bestScore = Double.NEGATIVE_INFINITY;
 		Edge result = null;
 		for(Edge e : availableEdges){
+			//System.out.println("UCB " + e.getUCBScore());
 			if(e.getUCBScore() > bestScore){
 				result = e;
 			}
 		}
 		if(result == null){
-			throw new NullPointerException("No Selection Edge found WTF");
+			throw new NullPointerException("No Selection Edge found WTF " + availableEdges.size());
 		}
 		return result;
 	}
