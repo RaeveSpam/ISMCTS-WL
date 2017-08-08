@@ -29,7 +29,7 @@ public class SimpleMCTS {
 		root = new Node(state.getMyPlayerName(), state.getMap().getMapCopy(), plannedMoves);
 		current = root;		
 		for(int i = 0; i < iterations; i++){
-			System.out.println("Iteration " + (i+1));
+			//System.out.println("Iteration " + (i+1));
 			// run iteration
 			current = root;
 			LinkedList<Edge> visitedEdges = new LinkedList<Edge>();

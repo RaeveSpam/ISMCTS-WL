@@ -693,7 +693,7 @@ public class RunGame
 		config.visualize = false;
 		
 		// if false, not all human controls would be accessible (when hijacking bots via 'H' or 'J')
-		config.forceHumanVisualization = false;   
+		config.forceHumanVisualization = true;   
 		
 		config.replayLog = new File("./replay.log");
 		

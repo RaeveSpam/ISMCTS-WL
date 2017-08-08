@@ -17,7 +17,7 @@ public class SimpleMCTSBot implements Bot {
 	private SimpleMCTS mcts = null;
 	
 	private int ITERATIONS = 20;
-	
+	int round = 1;
 	/**
 	 * A method used at the start of the game to decide which player start with what Regions. 6 Regions are required to be returned.
 	 * This example randomly picks 6 regions from the pickable starting Regions given by the engine.
@@ -26,6 +26,8 @@ public class SimpleMCTSBot implements Bot {
 	@Override
 	public ArrayList<RegionData> getPreferredStartingRegions(BotState state, Long timeOut)
 	{
+		System.out.println(Runtime.getRuntime().totalMemory());
+		
 		//Runtime runtime = Runtime.getRuntime();
 		//System.out.println(runtime.maxMemory());
 		int m = 6;
@@ -58,6 +60,8 @@ public class SimpleMCTSBot implements Bot {
 	@Override
 	public ArrayList<PlaceArmiesMove> getPlaceArmiesMoves(BotState state, Long timeOut) 
 	{		
+		System.out.println("Round " + round);
+		round++;
 		ArrayList<PlaceArmiesMove> placeArmiesMoves = new ArrayList<PlaceArmiesMove>();
 		String myName = state.getMyPlayerName();
 		LinkedList<Integer> armies = new LinkedList<Integer>();
@@ -77,7 +81,7 @@ public class SimpleMCTSBot implements Bot {
 		}		
 		LinkedList<Move> plannedMoves = new LinkedList<Move>();
 		for(int i = 0; i < moves; i++){
-			System.out.println("Get place move");
+			//System.out.println("Get place move");
 			mcts = new SimpleMCTS(state, plannedMoves);
 			Move move = mcts.getMove(ITERATIONS, Phase.PlaceArmies);
 			mcts = null;
@@ -115,7 +119,7 @@ public class SimpleMCTSBot implements Bot {
 				attackTransferMoves.add(result);
 			}
 			i--;
-		} while(move != null && i > 0);
+		} while(move != null /*&& i > 0*/);
 		return attackTransferMoves;
 	}
 	
