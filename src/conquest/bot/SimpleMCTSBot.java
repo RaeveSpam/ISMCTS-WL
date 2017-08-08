@@ -3,7 +3,7 @@ package conquest.bot;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import MCTS.SimpleMCTS;
+import MCTS.ISMCTS;
 import MCTS.Determinization.Phase;
 import conquest.game.RegionData;
 import conquest.game.move.AttackTransferMove;
@@ -14,7 +14,8 @@ import conquest.view.GUI;
 
 
 public class SimpleMCTSBot implements Bot {
-	private SimpleMCTS mcts = null;
+	private ISMCTS mcts = null;
+	private boolean POM = false;
 	
 	private int ITERATIONS = 20;
 	
@@ -78,7 +79,7 @@ public class SimpleMCTSBot implements Bot {
 		LinkedList<Move> plannedMoves = new LinkedList<Move>();
 		for(int i = 0; i < moves; i++){
 			System.out.println("Get place move");
-			mcts = new SimpleMCTS(state, plannedMoves);
+			mcts = new ISMCTS(state, plannedMoves, POM);
 			Move move = mcts.getMove(ITERATIONS, Phase.PlaceArmies);
 			mcts = null;
 			if(move != null){
@@ -105,7 +106,7 @@ public class SimpleMCTSBot implements Bot {
 		int i = 3;
 		do {
 			
-			mcts = new SimpleMCTS(state, plannedMoves);
+			mcts = new ISMCTS(state, plannedMoves, POM);
 			move = mcts.getMove(ITERATIONS, Phase.AttackTransfer);
 			mcts = null;
 			if(move != null){

@@ -10,19 +10,21 @@ import conquest.game.RegionData;
 
 import conquest.game.move.Move;
 
-public class SimpleMCTS {
+public class ISMCTS {
 
 	Node root;
 	Node current;
+	boolean POM = false;
 	
 	GameMap visibleMap;
 	BotState state;
 	
 	private final LinkedList<Move> plannedMoves;
 	
-	public SimpleMCTS(BotState state, LinkedList<Move> plannedMoves){
+	public ISMCTS(BotState state, LinkedList<Move> plannedMoves, boolean POM){
 		this.state = state;
 		this.plannedMoves = plannedMoves;
+		this.POM = POM;
 	}
 	
 	public Move getMove(int iterations, Phase phase){
@@ -38,7 +40,7 @@ public class SimpleMCTS {
 			for(Move m : plannedMoves){
 				previousMoves.add(m);
 			}
-			Determinization determ = new Determinization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber());
+			Determinization determ = new Determinization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber(), POM);
 			determ.determinize(phase);
 			do{
 				

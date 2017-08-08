@@ -12,6 +12,7 @@ public class Edge {
 	public Move move;
 	public boolean pass;
 	private Node previousNode;
+	public boolean pom = false;
 	
 	public Edge(String player, Move move, Node previousNode){
 		this.player = player;
