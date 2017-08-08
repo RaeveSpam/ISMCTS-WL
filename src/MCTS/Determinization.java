@@ -33,11 +33,13 @@ public class Determinization {
 	String currentPlayer = null;
 	String nextPlayer = null;
 	
+	boolean POM = false;
+	
 	public enum Phase {
 		PlaceArmies, AttackTransfer
 	}
 	
-	public Determinization(GameMap map, LinkedList<Move> plannedMoves, String myName, String opponentName, int roundNumber){
+	public Determinization(GameMap map, LinkedList<Move> plannedMoves, String myName, String opponentName, int roundNumber, boolean POM){
 		this.previousMoves = plannedMoves;
 		baseMap = map.getMapCopy();
 		determinedMap = map.getMapCopy();
@@ -48,6 +50,7 @@ public class Determinization {
 
 		rootNode = new Node(myName, map, new LinkedList<>());
 		this.roundNumber = roundNumber;
+		this.POM = POM;
 	}
 	
 	/**
@@ -171,7 +174,20 @@ public class Determinization {
 	 * @param move
 	 */
 	public void playOutMove(Move move){
-		if(move.getClass() == PlaceArmiesMove.class){
+		if(move.getClass() == POMMove.class){
+			// play out a random available move
+			LinkedList<Move> moves = new LinkedList<Move>();
+			if(currentPhase == Phase.PlaceArmies){
+				moves = getPlayerData(move.getPlayerName()).placeArmiesMoves;
+			} else if(currentPhase == Phase.AttackTransfer){
+				moves = getPlayerData(move.getPlayerName()).attackTransferMoves;
+			}
+			if(moves.size() > 0){
+				// pick random move
+				Random random = new Random();
+				playOutMove(moves.get(random.nextInt(moves.size())));
+			}
+		} else if(move.getClass() == PlaceArmiesMove.class){
 			// add armies to region
 			int region = ((PlaceArmiesMove)move).getRegion().getId();
 			int armies = determinedMap.getRegion(region).getArmies() + getDeployment(((PlaceArmiesMove)move).getPlayerName());
@@ -321,6 +337,12 @@ public class Determinization {
 			nextPlayer = null;
 		}
 		LinkedList<Edge> result = new LinkedList<Edge>();
+		
+		if(POM && currentPlayer == player2.name){
+			// Partial Observable Move
+			result.add(new POMEdge(currentPlayer, null, node));
+			return result;
+		}
 		LinkedList<Move> moves = new LinkedList<Move>();
 		
 		if(currentPhase == Phase.PlaceArmies){
