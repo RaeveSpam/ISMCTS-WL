@@ -10,6 +10,8 @@ public class PlayerData {
 	LinkedList<Move> attackTransferMoves;
 	boolean hasPassed;
 	LinkedList<Integer> deployments;
+	LinkedList<Move> committedMoves;
+	int deployCount;
 	
 	public PlayerData(String player){
 		name = player;
@@ -17,6 +19,8 @@ public class PlayerData {
 		attackTransferMoves = new LinkedList<Move>();
 		hasPassed = false;
 		deployments = new LinkedList<Integer>();
+		committedMoves = new LinkedList<Move>();
+		deployCount = 0;
 	}
 	
 	@Override

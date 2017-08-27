@@ -20,6 +20,7 @@ package conquest.engine;
 import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -670,7 +671,7 @@ public class RunGame
 		
 		result.round = engine.getRoundNr()-1;
 		
-		System.out.println(result.getHumanString());
+		//System.out.println(result.getHumanString());
 		
 		return result;
 	}
@@ -679,9 +680,10 @@ public class RunGame
 	{	
 		Config config = new Config();
 		
-		config.bot1Init = "internal:conquest.bot.SimpleMCTSBot";
+		config.bot1Init = "internal:conquest.bot.ISMCTSBot";
 		//config.bot1Init = "human";
-		config.bot2Init = "internal:conquest.bot.BotStarter";
+		config.bot2Init = "internal:conquest.bot.ISMCTS_POMBot";
+		//config.bot2Init = "internal:conquest.bot.SimpleMCTSBot";
 		//config.bot2Init = "process:java -cp bin conquest.bot.BotStarter";
 		//config.bot2Init = "dir;process:c:/my_bot/;java -cp bin conquest.bot.BotStarter";
 		
@@ -696,11 +698,161 @@ public class RunGame
 		config.forceHumanVisualization = true;   
 		
 		config.replayLog = new File("./replay.log");
+		//RunGame run = new RunGame(config);
+		//GameResult result = run.go();
+		ISMCTSBot bot1;
+		ISMCTSBot bot2;
 		
-		RunGame run = new RunGame(config);
-		GameResult result = run.go();
+		// Standard v. POM
+		bot1 = new ISMCTSBot();
+		bot1.ITERATIONS = 10;
+		bot2 = new ISMCTS_POMBot();
+		bot2.ITERATIONS = 160;
+		matchedTest(bot1, bot2, "MATCHED_STANDARD" + bot1.ITERATIONS + "_POM" + bot2.ITERATIONS, config);
+		
+		// Order v. ORDERPOM
+		bot1 = new ISMCTSBot();
+		bot1.ITERATIONS = 10;
+		bot1.order = true;
+		bot2 = new ISMCTS_POMBot();
+		bot2.ITERATIONS = 160;
+		bot2.order = true;
+		matchedTest(bot1, bot2, "MATCHED_ORDER" + bot1.ITERATIONS + "_ORDERPOM" + bot2.ITERATIONS, config);
+				
+		
+		// Standard v. Order
+		bot1 = new ISMCTSBot();
+		bot1.ITERATIONS = 10;
+		bot2 = new ISMCTSBot();
+		bot2.ITERATIONS = 10;
+		bot2.order = true;
+		matchedTest(bot1, bot2, "MATCHED_STANDARD" + bot1.ITERATIONS + "_ORDER" + bot2.ITERATIONS, config);
+		
+		// POM v. OrderPOM
+		bot1 = new ISMCTS_POMBot();
+		bot1.ITERATIONS = 80;
+		bot2 = new ISMCTS_POMBot();
+		bot2.ITERATIONS = 80;
+		bot2.order = true;
+		matchedTest(bot1, bot2, "MATCHED_POM" + bot1.ITERATIONS + "_ORDERPOM" + bot2.ITERATIONS, config);
+						
 		
 		System.exit(0);
+		
+		
+		// setup experiments
+		
+		
+		
+		
+	//	RunGame run = new RunGame(config);
+		//GameResult result = run.go(bot1, bot2);
+		//System.out.println(bot1.timeSpent);
+		//GameResult result = run.go();
+		
+		System.exit(0);
+	}
+	private static void speedTest(ISMCTSBot bot, String botName, Config config) {
+		try {
+			int matches = 5;
+			PrintWriter writer = new PrintWriter(botName + bot.ITERATIONS +".csv");
+			writer.println("matches; totalRounds; bot1 regions; bot2 regions; bot1 armies; bot2armies; #bot1wins; #bot2wins; #ties; bot1time");
+			
+			int totalBot1Regions = 0;
+			int totalBot1Wins = 0;
+			int totalBot2Wins = 0;
+			int totalTies = 0;
+			int totalBot2Regions = 0;
+			int totalBot1Armies = 0;
+			int totalBot2Armies = 0;
+			int totalTimeSpent = 0;
+			int totalRounds = 0;
+			
+			for(int i = 0; i < matches; i++) {
+				System.out.println(botName + bot.ITERATIONS + " #match " + (i+1));
+				try {
+					Bot bot2 = new BotStarter();
+					RunGame run = new RunGame(config);
+					GameResult result = run.go(bot, bot2);
+					
+					if(result.player1Regions == 0) {
+						totalBot2Wins++;
+					} else if (result.player2Regions == 0) {
+						totalBot1Wins++;
+					} else {
+						totalTies++;
+					}
+					
+					totalRounds += result.round;
+					totalBot1Regions += result.player1Regions;
+					totalBot2Regions += result.player2Regions;
+					totalBot1Armies += result.player1Armies;
+					totalBot2Armies += result.player2Armies;
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(0);
+				}
+			}
+			totalTimeSpent += bot.timeSpent/1000;
+			writer.println();
+			writer.print(matches + "; " + totalRounds + "; "+ totalBot1Regions + "; "+ totalBot2Regions+ "; " + totalBot1Armies + "; "+ totalBot2Armies+ "; " + totalBot1Wins + "; " + totalBot2Wins + "; "+ totalTies + "; " + totalTimeSpent);
+			writer.close();
+		} catch (IOException e) {
+			System.out.println("IOException | " + e.getMessage());
+		}
+	}
+	
+	private static void matchedTest(ISMCTSBot bot1, ISMCTSBot bot2, String filename, Config config) {
+		try {
+			int matches = 5;
+			PrintWriter writer = new PrintWriter(filename + ".csv");
+			writer.println("matches; totalRounds; bot1 regions; bot2 regions; bot1 armies; bot2armies; #bot1wins; #bot2wins; #ties; bot1time; bot2time");
+			
+			int totalBot1Regions = 0;
+			int totalBot1Wins = 0;
+			int totalBot2Wins = 0;
+			int totalTies = 0;
+			int totalBot2Regions = 0;
+			int totalBot1Armies = 0;
+			int totalBot2Armies = 0;
+			int totalBot1Time = 0;
+			int totalBot2Time = 0;
+			int totalRounds = 0;
+			
+			for(int i = 0; i < matches; i++) {
+				try {
+					System.out.println("#match " + (i+1));
+					RunGame run = new RunGame(config);
+					GameResult result = run.go(bot1, bot2);
+					
+					if(result.player1Regions == 0) {
+						totalBot2Wins++;
+					} else if (result.player2Regions == 0) {
+						totalBot1Wins++;
+					} else {
+						totalTies++;
+					}
+					
+					totalRounds += result.round;
+					totalBot1Regions += result.player1Regions;
+					totalBot2Regions += result.player2Regions;
+					totalBot1Armies += result.player1Armies;
+					totalBot2Armies += result.player2Armies;
+					
+				} catch (Exception e) {
+					e.printStackTrace();
+					System.exit(0);
+				}
+			}
+			totalBot1Time += bot1.timeSpent/1000;
+			totalBot2Time += bot2.timeSpent/1000;
+			writer.println();
+			writer.print(matches + "; " + totalRounds + "; " + totalBot1Regions + "; "+ totalBot2Regions+ "; " + totalBot1Armies + "; "+ totalBot2Armies+ "; " + totalBot1Wins + "; " + totalBot2Wins + "; "+ totalTies + "; " + totalBot1Time + "; " + totalBot2Time);
+			writer.close();
+		} catch (IOException e) {
+			System.out.println("IOException | " + e.getMessage());
+		}
 	}
 	
 

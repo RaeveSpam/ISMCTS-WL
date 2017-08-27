@@ -15,16 +15,18 @@ public class ISMCTS {
 	Node root;
 	Node current;
 	boolean POM = false;
+	boolean order;
 	
 	GameMap visibleMap;
 	BotState state;
 	
 	private final LinkedList<Move> plannedMoves;
 	
-	public ISMCTS(BotState state, LinkedList<Move> plannedMoves, boolean POM){
+	public ISMCTS(BotState state, LinkedList<Move> plannedMoves, boolean POM, boolean order){
 		this.state = state;
 		this.plannedMoves = plannedMoves;
 		this.POM = POM;
+		this.order = order;
 	}
 	
 	public Move getMove(int iterations, Phase phase){
@@ -40,7 +42,12 @@ public class ISMCTS {
 			for(Move m : plannedMoves){
 				previousMoves.add(m);
 			}
-			Determinization determ = new Determinization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber(), POM);
+			Determinization determ = null;
+			if(order) {
+				determ = new OrderDeterminization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber(), POM);
+			} else {
+				determ = new Determinization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber(), POM);
+			}
 			determ.determinize(phase);
 			do{
 				
@@ -48,6 +55,7 @@ public class ISMCTS {
 				// selection / expansion
 				current.setDeterminization(determ);
 				Edge currentEdge = current.getEdge();
+				//System.out.println("Got Edge");
 				visitedEdges.add(currentEdge);
 				
 				// simulation
@@ -55,11 +63,13 @@ public class ISMCTS {
 					//System.out.println(currentEdge.player + " passes");
 					determ.passMove(currentEdge.player);
 				} else {
-					
 					determ.playOutMove(currentEdge.move);
 				}
 				
-				current = currentEdge.getNode();
+				current = currentEdge.getNode(order);
+				if(currentEdge.pass){
+					current.player = determ.getOtherPlayer(currentEdge.player);
+				}
 			} while(!determ.isTerminal());
 			
 			// backpropogate
@@ -67,6 +77,7 @@ public class ISMCTS {
 			for(Edge e : visitedEdges){
 				e.backPropogate(winner);
 			}
+			determ = null;
 		}
 		
 		Move best = root.getBestEdge(state.getMyPlayerName()).move;

@@ -13,11 +13,14 @@ import conquest.view.GUI;
 
 
 
-public class SimpleMCTSBot implements Bot {
+public class ISMCTSBot implements Bot {
 	private ISMCTS mcts = null;
-	private boolean POM = false;
+	public boolean POM = false;
+	public boolean order = true;
 	
-	private int ITERATIONS = 20;
+	public long timeSpent = 0;
+	
+	public int ITERATIONS = 5;
 	
 	/**
 	 * A method used at the start of the game to decide which player start with what Regions. 6 Regions are required to be returned.
@@ -27,6 +30,7 @@ public class SimpleMCTSBot implements Bot {
 	@Override
 	public ArrayList<RegionData> getPreferredStartingRegions(BotState state, Long timeOut)
 	{
+		
 		//Runtime runtime = Runtime.getRuntime();
 		//System.out.println(runtime.maxMemory());
 		int m = 6;
@@ -59,6 +63,8 @@ public class SimpleMCTSBot implements Bot {
 	@Override
 	public ArrayList<PlaceArmiesMove> getPlaceArmiesMoves(BotState state, Long timeOut) 
 	{		
+		printState(state);
+		long time = System.currentTimeMillis();
 		ArrayList<PlaceArmiesMove> placeArmiesMoves = new ArrayList<PlaceArmiesMove>();
 		String myName = state.getMyPlayerName();
 		LinkedList<Integer> armies = new LinkedList<Integer>();
@@ -78,8 +84,8 @@ public class SimpleMCTSBot implements Bot {
 		}		
 		LinkedList<Move> plannedMoves = new LinkedList<Move>();
 		for(int i = 0; i < moves; i++){
-			System.out.println("Get place move");
-			mcts = new ISMCTS(state, plannedMoves, POM);
+			//System.out.println("Get place move");
+			mcts = new ISMCTS(state, plannedMoves, POM, order);
 			Move move = mcts.getMove(ITERATIONS, Phase.PlaceArmies);
 			mcts = null;
 			if(move != null){
@@ -89,6 +95,8 @@ public class SimpleMCTSBot implements Bot {
 				placeArmiesMoves.add(result);
 			}
 		}		
+		long newTime = System.currentTimeMillis();
+		timeSpent += newTime-time;
 		return placeArmiesMoves;
 	}
 	
@@ -100,13 +108,14 @@ public class SimpleMCTSBot implements Bot {
 	@Override
 	public ArrayList<AttackTransferMove> getAttackTransferMoves(BotState state, Long timeOut) 
 	{
+		long time = System.currentTimeMillis();
 		ArrayList<AttackTransferMove> attackTransferMoves = new ArrayList<AttackTransferMove>();
 		LinkedList<Move> plannedMoves = new LinkedList<Move>();
 		Move move = null;
 		int i = 3;
 		do {
 			
-			mcts = new ISMCTS(state, plannedMoves, POM);
+			mcts = new ISMCTS(state, plannedMoves, POM, order);
 			move = mcts.getMove(ITERATIONS, Phase.AttackTransfer);
 			mcts = null;
 			if(move != null){
@@ -115,8 +124,10 @@ public class SimpleMCTSBot implements Bot {
 				result.setArmies(result.getFromRegion().getArmies()-1);
 				attackTransferMoves.add(result);
 			}
-			i--;
+			//i--;
 		} while(move != null && i > 0);
+		long newTime = System.currentTimeMillis();
+		timeSpent += newTime-time; 
 		return attackTransferMoves;
 	}
 	
@@ -139,7 +150,19 @@ public class SimpleMCTSBot implements Bot {
 		
 	}
 	
-	
+	public void printState(BotState state) {
+		int myRegions = 0;
+		int enemyRegions = 0;
+		for(RegionData r : state.getMap().getRegions()) {
+			if(r.ownedByPlayer(state.getMyPlayerName())) {
+				myRegions++;
+			} else if(r.ownedByPlayer(state.getOpponentPlayerName())) {
+				enemyRegions++;
+			}
+		}
+		System.out.println("Round " + state.getRoundNumber() + ": " + state.getMyPlayerName() + " " + myRegions + " - " + state.getOpponentPlayerName() + " " + enemyRegions);
+		//System.out.println("Total time spent " + (timeSpent/1000));
+	}
 	
 	@Override
 	public void setGUI(GUI gui) {
@@ -147,7 +170,7 @@ public class SimpleMCTSBot implements Bot {
 	
 	public static void main(String[] args)
 	{
-		BotParser parser = new BotParser(new SimpleMCTSBot());
+		BotParser parser = new BotParser(new ISMCTSBot());
 		//parser.setLogFile(new File("./BotStarter.log"));
 		parser.run();
 	}

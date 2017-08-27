@@ -53,6 +53,14 @@ public class Determinization {
 		this.POM = POM;
 	}
 	
+	public String getOtherPlayer(String player) {
+		if(player != player1.name) {
+			return player1.name;
+		} else {
+			return player2.name;
+		}
+	}
+	
 	/**
 	 * Determinization step
 	 */
@@ -130,7 +138,7 @@ public class Determinization {
 		}
 	}
 	
-	private PlayerData getPlayerData(String player){
+	protected PlayerData getPlayerData(String player){
 		if(player == player1.name){
 			return player1;
 		} else if(player == player2.name){
@@ -139,7 +147,7 @@ public class Determinization {
 		throw new NullPointerException("Unknown player");
 	}
 	
-	private Phase getCurrentPhase(){
+	protected Phase getCurrentPhase(){
 		if(currentPhase == Phase.PlaceArmies){
 			//System.out.println(player1.deployments.size() + " " + player2.deployments.size());
 			if(player1.deployments.isEmpty() && player2.deployments.isEmpty()){
@@ -155,6 +163,7 @@ public class Determinization {
 				// New Place armies phase & and new round
 				roundNumber++;
 				currentPhase = Phase.PlaceArmies;
+				updateDeployments();
 				player1.hasPassed = false;
 				player1.hasPassed = false;
 				player1.placeArmiesMoves = getPossiblePlaceArmiesMoves(player1.name);
@@ -174,20 +183,28 @@ public class Determinization {
 	 * @param move
 	 */
 	public void playOutMove(Move move){
+		//System.out.println(getPlayerData(move.getPlayerName()).deployments.size());
 		if(move.getClass() == POMMove.class){
 			// play out a random available move
 			LinkedList<Move> moves = new LinkedList<Move>();
 			if(currentPhase == Phase.PlaceArmies){
 				moves = getPlayerData(move.getPlayerName()).placeArmiesMoves;
+				//System.out.println("place army moves " + moves.size());
 			} else if(currentPhase == Phase.AttackTransfer){
 				moves = getPlayerData(move.getPlayerName()).attackTransferMoves;
+				//System.out.println("attack transfer moves " + moves.size());
 			}
+			
 			if(moves.size() > 0){
 				// pick random move
+				//System.out.println("pick move");
 				Random random = new Random();
-				playOutMove(moves.get(random.nextInt(moves.size())));
+				move = moves.get(random.nextInt(moves.size()));	
+			} else {
+				passMove(move.getPlayerName());
 			}
-		} else if(move.getClass() == PlaceArmiesMove.class){
+		}
+		if(move.getClass() == PlaceArmiesMove.class){
 			// add armies to region
 			int region = ((PlaceArmiesMove)move).getRegion().getId();
 			int armies = determinedMap.getRegion(region).getArmies() + getDeployment(((PlaceArmiesMove)move).getPlayerName());
@@ -199,7 +216,7 @@ public class Determinization {
 	}
 	
 	
-	private int getArmiesPerTurn(String player){
+	protected int getArmiesPerTurn(String player){
 		int result = 5;
 		for(ContinentData c : determinedMap.getContinents()){
 			if(c.ownedByPlayer() == player){
@@ -215,7 +232,7 @@ public class Determinization {
 	 * @param map
 	 * @return Resulting map from the simulation.
 	 */
-	public void playOutChanceMove(AttackTransferMove move){
+	protected void playOutChanceMove(AttackTransferMove move){
 		
 		// remove moves from available moves
 		LinkedList<Move> moves = getPlayerData(move.getPlayerName()).attackTransferMoves;
@@ -290,12 +307,12 @@ public class Determinization {
 		return getPlayerData(player).deployments.pollFirst();
 	}
 	
-	private void updateDeployments(){
+	protected void updateDeployments(){
 		updatePlayerDeployment(player1);
 		updatePlayerDeployment(player2);
 	}
 	
-	private void updatePlayerDeployment(PlayerData player){
+	protected void updatePlayerDeployment(PlayerData player){
 		int armies = getArmiesPerTurn(player.name);
 		int[] deployments = new int[] {0, 0, 0, 0, 0};
 		int i = 0;
@@ -337,10 +354,12 @@ public class Determinization {
 			nextPlayer = null;
 		}
 		LinkedList<Edge> result = new LinkedList<Edge>();
-		
+		//System.out.println(currentPlayer);
 		if(POM && currentPlayer == player2.name){
 			// Partial Observable Move
 			result.add(new POMEdge(currentPlayer, null, node));
+			currentPlayer = nextPlayer;
+			nextPlayer = null;
 			return result;
 		}
 		LinkedList<Move> moves = new LinkedList<Move>();
@@ -412,7 +431,7 @@ public class Determinization {
 		}*/
 	}
 	
-	private int[] simulateAttack(int defenders, int attackers){
+	protected int[] simulateAttack(int defenders, int attackers){
 		int[] result = new int[] {defenders, attackers};
 		Random random = new Random();
 		// defenders fight

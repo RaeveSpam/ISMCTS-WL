@@ -13,6 +13,7 @@ public class Edge {
 	public boolean pass;
 	private Node previousNode;
 	public boolean pom = false;
+
 	
 	public Edge(String player, Move move, Node previousNode){
 		this.player = player;
@@ -31,7 +32,8 @@ public class Edge {
 			boolean result = ComparatorHelper.compareMove(move, ((Edge)o).move);
 			//System.out.println(result);
 			return result;
-		}
+		} 
+		
 		return false;
 	}
 	
@@ -42,9 +44,15 @@ public class Edge {
 		}
 	}
 	
-	public Node getNode(){
+	public Node getNode(boolean order){
 		if(nextNode == null){
 			nextNode = new Node(previousNode, this);
+			if(order) {
+				nextNode.player = player;
+				if(pass) {
+					//nextNode.player = opponent;
+				}
+			}
 		}
 		return nextNode;
 	}

@@ -9,5 +9,13 @@ public class POMEdge extends Edge {
 		pom = true;
 		// TODO Auto-generated constructor stub
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if(o.getClass() == POMEdge.class) {
+			return true;
+		}
+		return false;
+	}
 
 }
