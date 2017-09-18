@@ -60,9 +60,11 @@ public class Node {
 		availableEdges = determ.getAvailableEdges(this);
 		if(edges.size() == 0 && visits == 1){
 			// simulation
-			return simulation();
+			return getSimulationEdge();
 		}
 		availableEdges = getRealEdges(availableEdges);
+		
+		
 		if(isFullyExpanded()){
 			// select
 			result = getSelectionEdge();
@@ -74,16 +76,32 @@ public class Node {
 		if(result == null){
 			throw new NullPointerException("What the damn hell? No Edge found");
 		}
-		// increment available edge's availibility
+		// increment available edge's availability
 		for(Edge e : availableEdges){
 			e.available++;
 		}
 		return result;
 	}
 	
+	public void determinizeAvailableMoves() {
+		if(determ == null){
+			throw new NullPointerException("No determinization available");
+		}
+		availableEdges = determ.getAvailableEdges(this);
+		availableEdges = getRealEdges(availableEdges);
+	}
+	
+	public void updateAvailability() {
+		for(Edge e : availableEdges){
+			e.available++;
+		}
+	}
+	
 	public Edge getBestEdge(String player){
+		
 		LinkedList<Edge> bestEdges = new LinkedList<Edge>();
 		double score = Double.NEGATIVE_INFINITY;
+		
 		for(Edge e : edges){
 			if(e.player == player){
 				double escore = e.getUCBScore();
@@ -101,12 +119,12 @@ public class Node {
 		return bestEdges.get(random.nextInt(bestEdges.size()));
 	}
 	
-	private Edge simulation(){
+	public Edge getSimulationEdge(){
 		Random random = new Random();
 		return availableEdges.get(random.nextInt(availableEdges.size()));
 	}
 	
-	private boolean isFullyExpanded(){
+	public boolean isFullyExpanded(){
 		// check that every available edge has been visited at least once
 		if(availableEdges.size() == 0){
 			return false;
@@ -128,7 +146,9 @@ public class Node {
 		Edge result = null;
 		for(Edge e : availableEdges){
 			//System.out.println("UCB " + e.getUCBScore());
-			if(e.getUCBScore() > bestScore){
+			double escore = e.getUCBScore();
+			if(escore > bestScore){
+				bestScore = escore;
 				result = e;
 			}
 		}
@@ -175,6 +195,31 @@ public class Node {
 			} else {
 				int index = edges.indexOf(e);
 				result.add(edges.get(index));
+			}
+		}
+		return result;
+	}
+	
+	public Edge getMostVisitedEdge() {
+		int max = -1;
+		Edge result = null;
+		for(Edge e : edges) {
+			if(e.visits > max) {
+				max = e.visits;
+				result = e;
+			}
+		}
+		return result;
+	}
+	
+	public Edge getBestAverageEdge() {
+		double max = Double.NEGATIVE_INFINITY;
+		Edge result = null;
+		for(Edge e : edges) {
+			double eAverage = e.wins/e.visits;
+			if(e.visits > max) {
+				max = eAverage;
+				result = e;
 			}
 		}
 		return result;

@@ -11,8 +11,6 @@ import conquest.game.move.Move;
 import conquest.game.move.PlaceArmiesMove;
 
 public class OrderDeterminization extends Determinization {
-
-	
 	
 	public OrderDeterminization(GameMap map, LinkedList<Move> plannedMoves, String myName, String opponentName,
 			int roundNumber, boolean POM) {
@@ -22,6 +20,7 @@ public class OrderDeterminization extends Determinization {
 	
 	@Override
 	public void playOutMove(Move move) {
+		//System.out.println(move.getPlayerName() + " move" + move.getClass());
 		//System.out.println(currentPhase);
 		if(move.getClass() == POMMove.class){
 			// play out a random available move
@@ -70,45 +69,75 @@ public class OrderDeterminization extends Determinization {
 	@Override
 	public void passMove(String player) {
 		//System.out.println("pass " + player);
+	//	currentPlayer = getOtherPlayer(player);
+	//	System.out.println(roundNumber + " " + player + " passed");
 		if(currentPhase == Phase.AttackTransfer) {
 			getPlayerData(player).hasPassed = true;
-		}
-		
-		if(player == player2.name) {
-			int movePairs = Math.min(player1.committedMoves.size(), player2.committedMoves.size());
-			for(int i = 0; i < movePairs; i++) {
-				if(random.nextBoolean()) {
-					playOutChanceMove((AttackTransferMove)player1.committedMoves.get(i));
-					playOutChanceMove((AttackTransferMove)player2.committedMoves.get(i));
-				} else {
-					playOutChanceMove((AttackTransferMove)player2.committedMoves.get(i));
+				
+			if(player.equals(player2.name)) {
+				int movePairs = Math.min(player1.committedMoves.size(), player2.committedMoves.size());
+				for(int i = 0; i < movePairs; i++) {
+					if(random.nextBoolean()) {
+						playOutChanceMove((AttackTransferMove)player1.committedMoves.get(i));
+						playOutChanceMove((AttackTransferMove)player2.committedMoves.get(i));
+					} else {
+						playOutChanceMove((AttackTransferMove)player2.committedMoves.get(i));
+						playOutChanceMove((AttackTransferMove)player1.committedMoves.get(i));
+					}
+				}
+				
+				for(int i = movePairs; i < player1.committedMoves.size(); i++) {
 					playOutChanceMove((AttackTransferMove)player1.committedMoves.get(i));
 				}
+				for(int i = movePairs; i < player2.committedMoves.size(); i++) {
+					playOutChanceMove((AttackTransferMove)player2.committedMoves.get(i));
+				}
+				player1.hasPassed = true;
+				player2.hasPassed = true;
+				player1.deployCount = 0;
+				player2.deployCount = 0;
+				//currentPhase = Phase.PlaceArmies;
+				//roundNumber++;
+				switchPhases();
 			}
-			
-			for(int i = movePairs; i < player1.committedMoves.size(); i++) {
-				playOutChanceMove((AttackTransferMove)player1.committedMoves.get(i));
+		} else if(currentPhase == Phase.PlaceArmies) {
+			if(player.equals(player2.name)) {
+				switchPhases();
 			}
-			for(int i = movePairs; i < player2.committedMoves.size(); i++) {
-				playOutChanceMove((AttackTransferMove)player2.committedMoves.get(i));
-			}
-			//TODO play rest
-			player1.hasPassed = true;
-			player2.hasPassed = true;
-			player1.deployCount = 0;
-			player2.deployCount = 0;
-			//getCurrentPhase();		
+		}
+		
+	}
+	
+	private void switchPhases() {
+		if(currentPhase == Phase.PlaceArmies){
+				// new attack transfer phase
+				currentPhase = Phase.AttackTransfer;
+				player1.attackTransferMoves = getAvailableAttackTransferMoves(player1.name);
+				player2.attackTransferMoves = getAvailableAttackTransferMoves(player2.name);
+				player1.hasPassed = false;
+				player1.hasPassed = false;
+		} else if(currentPhase == Phase.AttackTransfer){
+				// New Place armies phase & and new round
+				roundNumber++;
+				currentPhase = Phase.PlaceArmies;
+				updateDeployments();
+				player1.hasPassed = false;
+				player1.hasPassed = false;
+				player1.placeArmiesMoves = getPossiblePlaceArmiesMoves(player1.name);
+				player2.placeArmiesMoves = getPossiblePlaceArmiesMoves(player2.name);
 		}
 	}
 	
 	@Override
 	public LinkedList<Edge> getAvailableEdges(Node node){
-		getCurrentPhase();
+		//getCurrentPhase();
+		super.order = true;
 		if(currentPhase == Phase.PlaceArmies && getPlayerData(node.player).deployCount > 4) {
 			LinkedList<Edge> result = new LinkedList<Edge>();
 			result.add(new PassEdge(node.player, null, node));
 			return result;
 		} else {
+			super.order = true;
 			return super.getAvailableEdges(node);
 		}
 	}

@@ -28,6 +28,8 @@ public class Determinization {
 	
 	Phase currentPhase;
 	
+	public boolean order = false;
+	
 	int roundNumber = 0;
 	
 	String currentPlayer = null;
@@ -54,7 +56,7 @@ public class Determinization {
 	}
 	
 	public String getOtherPlayer(String player) {
-		if(player != player1.name) {
+		if(!player.equals(player1.name)) {
 			return player1.name;
 		} else {
 			return player2.name;
@@ -139,9 +141,9 @@ public class Determinization {
 	}
 	
 	protected PlayerData getPlayerData(String player){
-		if(player == player1.name){
+		if(player.equals(player1.name)){
 			return player1;
-		} else if(player == player2.name){
+		} else if(player.equals(player2.name)){
 			return player2;
 		}
 		throw new NullPointerException("Unknown player");
@@ -155,7 +157,8 @@ public class Determinization {
 				currentPhase = Phase.AttackTransfer;
 				player1.attackTransferMoves = getAvailableAttackTransferMoves(player1.name);
 				player2.attackTransferMoves = getAvailableAttackTransferMoves(player2.name);
-				
+				player1.hasPassed = false;
+				player1.hasPassed = false;
 			}
 		} else if(currentPhase == Phase.AttackTransfer){
 			//System.out.println("Wooooooooo");
@@ -184,6 +187,7 @@ public class Determinization {
 	 */
 	public void playOutMove(Move move){
 		//System.out.println(getPlayerData(move.getPlayerName()).deployments.size());
+		//System.out.println(move.getPlayerName() + " move " + move.getClass());
 		if(move.getClass() == POMMove.class){
 			// play out a random available move
 			LinkedList<Move> moves = new LinkedList<Move>();
@@ -206,11 +210,13 @@ public class Determinization {
 		}
 		if(move.getClass() == PlaceArmiesMove.class){
 			// add armies to region
+			//System.out.println("Place move");
 			int region = ((PlaceArmiesMove)move).getRegion().getId();
 			int armies = determinedMap.getRegion(region).getArmies() + getDeployment(((PlaceArmiesMove)move).getPlayerName());
 			determinedMap.getRegion(region).setArmies(armies);
 		} else if(move.getClass() == AttackTransferMove.class){
 			// attack transfer
+			//System.out.println("attack/transfer move");
 			playOutChanceMove((AttackTransferMove)move);
 		}
 	}
@@ -233,7 +239,10 @@ public class Determinization {
 	 * @return Resulting map from the simulation.
 	 */
 	protected void playOutChanceMove(AttackTransferMove move){
-		
+	/*	if(move.getPlayerName().equals(player1.name)) {
+			System.out.println("PLAYER 1");
+		}*/
+		//System.out.println("	" + move.getPlayerName() + " attack/transfer");
 		// remove moves from available moves
 		LinkedList<Move> moves = getPlayerData(move.getPlayerName()).attackTransferMoves;
 		
@@ -251,17 +260,26 @@ public class Determinization {
 		RegionData toRegion = determinedMap.getRegion(move.getToRegion().getId());
 		int armies = Math.min((fromRegion.getArmies()-1), move.getArmies());
 		GameMap result = determinedMap.getMapCopy();
-		if(move.getPlayerName() != determinedMap.getRegion(move.getFromRegion().getId()).getPlayerName()){
+		if(!move.getPlayerName().equals(determinedMap.getRegion(move.getFromRegion().getId()).getPlayerName())){
+			//System.out.println(move.getPlayerName() + " - " + determinedMap.getRegion(move.getFromRegion().getId()).getPlayerName());
+			
 			return;
 		}
-		if(fromRegion.getArmies() == 0 || toRegion.getArmies() == 0 || armies == 0){
-			// unknown region illegal move
+		if(fromRegion.getArmies() < 2 || armies == 0){
+		
+			//System.out.println("	2. failure " + fromRegion.getArmies() + " " + toRegion.getArmies()  + " " + armies);
 			return;
 		}
-		if(fromRegion.getPlayerName() == toRegion.getPlayerName()){
+		
+		if(fromRegion.getPlayerName().equals(toRegion.getPlayerName())){
 			// transfer move
+			if(!(result.getRegion(fromRegion.getId()).getArmies() > armies)){
+				armies = result.getRegion(fromRegion.getId()).getArmies()-1;
+			}
+			armies += result.getRegion(toRegion.getId()).getArmies();
 			result.getRegion(toRegion.getId()).setArmies(armies);
 			result.getRegion(fromRegion.getId()).setArmies(fromRegion.getArmies()-armies);
+			
 		} else {
 			// deploy attackers
 			result.getRegion(fromRegion.getId()).setArmies(fromRegion.getArmies()-armies);
@@ -282,7 +300,7 @@ public class Determinization {
 				result.getRegion(toRegion.getId()).setPlayerName(fromRegion.getPlayerName());
 			}
 		}
-		
+		//System.out.println("Update determined map");
 		determinedMap = result;
 	}
 	
@@ -322,6 +340,7 @@ public class Determinization {
 			i++;
 			armies--;
 		}
+		player.deployCount = 0;
 		player.deployments = new LinkedList<Integer>();
 		for(Integer d : deployments){
 			player.deployments.add(d);
@@ -340,10 +359,12 @@ public class Determinization {
 	
 	
 	public LinkedList<Edge> getAvailableEdges(Node node){
-		
-		Phase phase = getCurrentPhase();
+		//System.out.println(node.player + " " + currentPhase);
+		if(!order) {
+			Phase phase = getCurrentPhase();
+		}
 		//System.out.println(phase);
-		if(node.player == "unknown"){
+		if(node.player.equals("unknown")){
 			if(currentPlayer == null){
 				String[] ord = getOrder();
 				currentPlayer = ord[0];
@@ -355,7 +376,7 @@ public class Determinization {
 		}
 		LinkedList<Edge> result = new LinkedList<Edge>();
 		//System.out.println(currentPlayer);
-		if(POM && currentPlayer == player2.name){
+		if(POM && currentPlayer.equals(player2.name)){
 			// Partial Observable Move
 			result.add(new POMEdge(currentPlayer, null, node));
 			currentPlayer = nextPlayer;
@@ -383,19 +404,21 @@ public class Determinization {
 	}
 	
 	public boolean isTerminal(){
-		getCurrentPhase();
+		if(!order) {
+			getCurrentPhase();
+		}
 		if(roundNumber > 100){
 			return true;
 		}
 		boolean player1Lives = false;
-		boolean plsyer2Lives = false;
+		boolean player2Lives = false;
 		for(RegionData r : determinedMap.getRegions()){
 			if(r.ownedByPlayer(player1.name)){
 				player1Lives = true;
 			} else if(r.ownedByPlayer(player2.name)){
-				plsyer2Lives = true;
+				player2Lives = true;
 			}
-			if(player1Lives && plsyer2Lives){
+			if(player1Lives && player2Lives){
 				return false;
 			}
 		}
@@ -413,6 +436,7 @@ public class Determinization {
 				player2regions++;
 			}
 		}
+		//System.out.println(player1regions + " - " + player2regions);
 		if(player1regions == 0){
 			return player2.name;
 		}
@@ -420,6 +444,15 @@ public class Determinization {
 		if(player2regions == 0){
 			return player1.name;
 		}
+		
+		if(player1regions >= player2regions*2) {
+			return player1.name;
+		}
+		
+		if(player2regions >= player1regions*2) {
+			return player2.name;
+		}
+		
 		return "none";
 		/*if(player1regions == player2regions){
 			return "none";
@@ -430,6 +463,36 @@ public class Determinization {
 			return player2.name;
 		}*/
 	}
+	
+	public double getWinner2() {
+		int player1regions = 0;
+		int player2regions = 0;
+		
+		for(RegionData r : determinedMap.getRegions()){
+			if(r.ownedByPlayer(player1.name)){
+				player1regions++;
+			} else if(r.ownedByPlayer(player2.name)){
+				player2regions++;
+			}
+		}
+		if(player1regions == 0){
+			return 1;
+		}
+		
+		if(player2regions == 0){
+			return 1;
+		}
+		
+		if(player1regions >= player2regions*2) {
+			return 0.75;
+		}
+		
+		if(player2regions >= player1regions*2) {
+			return 0.75;
+		}
+		return 0.5;
+	}
+	
 	
 	protected int[] simulateAttack(int defenders, int attackers){
 		int[] result = new int[] {defenders, attackers};

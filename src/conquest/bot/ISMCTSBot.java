@@ -20,7 +20,7 @@ public class ISMCTSBot implements Bot {
 	
 	public long timeSpent = 0;
 	
-	public int ITERATIONS = 5;
+	public int ITERATIONS = 20;
 	
 	/**
 	 * A method used at the start of the game to decide which player start with what Regions. 6 Regions are required to be returned.
@@ -124,10 +124,12 @@ public class ISMCTSBot implements Bot {
 				result.setArmies(result.getFromRegion().getArmies()-1);
 				attackTransferMoves.add(result);
 			}
+			//System.out.println(attackTransferMoves.size());
 			//i--;
 		} while(move != null && i > 0);
 		long newTime = System.currentTimeMillis();
 		timeSpent += newTime-time; 
+		//System.out.println("	" + attackTransferMoves.size());
 		return attackTransferMoves;
 	}
 	

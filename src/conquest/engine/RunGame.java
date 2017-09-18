@@ -708,7 +708,7 @@ public class RunGame
 		bot1.ITERATIONS = 10;
 		bot2 = new ISMCTS_POMBot();
 		bot2.ITERATIONS = 160;
-		matchedTest(bot1, bot2, "MATCHED_STANDARD" + bot1.ITERATIONS + "_POM" + bot2.ITERATIONS, config);
+		//matchedTest(bot1, bot2, "MATCHED_STANDARD" + bot1.ITERATIONS + "_POM" + bot2.ITERATIONS, config);
 		
 		// Order v. ORDERPOM
 		bot1 = new ISMCTSBot();
@@ -717,7 +717,7 @@ public class RunGame
 		bot2 = new ISMCTS_POMBot();
 		bot2.ITERATIONS = 160;
 		bot2.order = true;
-		matchedTest(bot1, bot2, "MATCHED_ORDER" + bot1.ITERATIONS + "_ORDERPOM" + bot2.ITERATIONS, config);
+		//matchedTest(bot1, bot2, "MATCHED_ORDER" + bot1.ITERATIONS + "_ORDERPOM" + bot2.ITERATIONS, config);
 				
 		
 		// Standard v. Order
@@ -726,16 +726,27 @@ public class RunGame
 		bot2 = new ISMCTSBot();
 		bot2.ITERATIONS = 10;
 		bot2.order = true;
-		matchedTest(bot1, bot2, "MATCHED_STANDARD" + bot1.ITERATIONS + "_ORDER" + bot2.ITERATIONS, config);
+		//matchedTest(bot1, bot2, "MATCHED_STANDARD" + bot1.ITERATIONS + "_ORDER" + bot2.ITERATIONS, config);
 		
 		// POM v. OrderPOM
-		bot1 = new ISMCTS_POMBot();
-		bot1.ITERATIONS = 80;
-		bot2 = new ISMCTS_POMBot();
-		bot2.ITERATIONS = 80;
+		bot1 = new ISMCTSBot();
+		bot1.ITERATIONS = 10;
+		bot1.order = true;
+		bot2 = new ISMCTSBot();
+		bot2.ITERATIONS = 20;
 		bot2.order = true;
-		matchedTest(bot1, bot2, "MATCHED_POM" + bot1.ITERATIONS + "_ORDERPOM" + bot2.ITERATIONS, config);
-						
+	//	matchedTest(bot1, bot2, "new" + bot1.ITERATIONS + "new" + bot2.ITERATIONS, config);
+		
+		ISMCTSBot bot = new ISMCTS_POMBot();
+		bot.ITERATIONS = 10;
+		bot.order = true;
+		speedTest(bot, "newISMCTS_One", config);
+	
+		
+	/*	Bot bot3 = new BotStarter();
+		RunGame run = new RunGame(config);
+		GameResult result = run.go(bot, bot3);
+		*/
 		
 		System.exit(0);
 		
@@ -805,7 +816,7 @@ public class RunGame
 	
 	private static void matchedTest(ISMCTSBot bot1, ISMCTSBot bot2, String filename, Config config) {
 		try {
-			int matches = 5;
+			int matches = 3;
 			PrintWriter writer = new PrintWriter(filename + ".csv");
 			writer.println("matches; totalRounds; bot1 regions; bot2 regions; bot1 armies; bot2armies; #bot1wins; #bot2wins; #ties; bot1time; bot2time");
 			

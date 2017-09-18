@@ -9,6 +9,7 @@ import conquest.game.GameMap;
 import conquest.game.RegionData;
 
 import conquest.game.move.Move;
+import conquest.game.move.PlaceArmiesMove;
 
 public class ISMCTS {
 
@@ -43,46 +44,92 @@ public class ISMCTS {
 				previousMoves.add(m);
 			}
 			Determinization determ = null;
+			// determinization
 			if(order) {
 				determ = new OrderDeterminization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber(), POM);
 			} else {
 				determ = new Determinization(state.getMap(), previousMoves, state.getMyPlayerName(), state.getOpponentPlayerName(), state.getRoundNumber(), POM);
 			}
 			determ.determinize(phase);
+			boolean hasExpanded = false;
+			int depth = 0;
 			do{
-				
 				//System.out.println(determ.roundNumber);
+				depth++;
+			//	System.out.println(depth);
+				/*
 				// selection / expansion
 				current.setDeterminization(determ);
 				Edge currentEdge = current.getEdge();
 				//System.out.println("Got Edge");
 				visitedEdges.add(currentEdge);
+				*/
 				
-				// simulation
+				// her
+				Edge currentEdge = null;
+				current.setDeterminization(determ);
+				current.determinizeAvailableMoves();
+				//System.out.println("Node player " + current.player);
+				if(hasExpanded) {
+					// simulation
+					currentEdge = current.getSimulationEdge();
+					
+				} else {
+					if(current.isFullyExpanded()) {
+						// selection
+						currentEdge = current.getSelectionEdge();
+						visitedEdges.add(currentEdge);
+						current.updateAvailability();
+						//System.out.println("Selection");
+					} else {
+						// expansion
+						currentEdge = current.getExpansionEdge();
+						visitedEdges.add(currentEdge);
+						current.updateAvailability();
+						hasExpanded = true;
+						//System.out.println("Expansion");
+					}
+				}
+				//System.out.println(currentEdge.player + " " + currentEdge.move.getClass());
+				//System.out.println(currentEdge.player + " " + currentEdge.getClass());
+				// update determined map
 				if(currentEdge.pass){
-					//System.out.println(currentEdge.player + " passes");
+					//System.out.println(currentEdge.player + " pass" + determ.currentPhase);
 					determ.passMove(currentEdge.player);
 				} else {
+					//System.out.println(currentEdge.player + " " + currentEdge.move.getClass());
 					determ.playOutMove(currentEdge.move);
 				}
-				
 				current = currentEdge.getNode(order);
 				if(currentEdge.pass){
 					current.player = determ.getOtherPlayer(currentEdge.player);
-				}
+				} 
+				/* else if(currentEdge.move.getClass() == PlaceArmiesMove.class 
+						&& currentEdge.player.equals(determ.player2.name)
+						&& determ.getCurrentPhase() == Phase.AttackTransfer) {
+					current.player = determ.player1.name;
+				}*/
+				
 			} while(!determ.isTerminal());
 			
 			// backpropogate
 			String winner = determ.getWinner();
+			double reward = determ.getWinner2();
+			//System.out.println(winner + " " + reward);
 			for(Edge e : visitedEdges){
-				e.backPropogate(winner);
+				e.backPropogate(reward, winner);
 			}
 			determ = null;
 		}
-		
+		//System.out.println("possible moves " + root.edges.size());
 		Move best = root.getBestEdge(state.getMyPlayerName()).move;
-		deconstruct();
+		//Move best = root.getMostVisitedEdge().move;
+	//	Move best = root.getBestAverageEdge().move;
+		//System.out.println(best);
+		
+		//deconstruct();
 		//System.out.println(best.wins);
+		//System.out.println(best);
 		return best;
 	}
 	
