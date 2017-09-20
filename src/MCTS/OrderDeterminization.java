@@ -62,6 +62,7 @@ public class OrderDeterminization extends Determinization {
 			getPlayerData(move.getPlayerName()).deployCount++;
 			int region = ((PlaceArmiesMove)move).getRegion().getId();
 			int armies = determinedMap.getRegion(region).getArmies() + getDeployment(((PlaceArmiesMove)move).getPlayerName());
+			//System.out.println("place " + armies);
 			determinedMap.getRegion(region).setArmies(armies);
 		}
 	}
@@ -125,6 +126,7 @@ public class OrderDeterminization extends Determinization {
 				player1.hasPassed = false;
 				player1.placeArmiesMoves = getPossiblePlaceArmiesMoves(player1.name);
 				player2.placeArmiesMoves = getPossiblePlaceArmiesMoves(player2.name);
+				baseMap = determinedMap.getMapCopy();
 		}
 	}
 	

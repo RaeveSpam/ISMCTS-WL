@@ -59,14 +59,16 @@ public class Edge {
 		}
 	}
 	
-	public Node getNode(boolean order){
+	public Node getNode(boolean order, boolean simulation){
 		if(nextNode == null){
-			nextNode = new Node(previousNode, this);
+			Node result = new Node(previousNode, this);
 			if(order) {
-				nextNode.player = player;
-				if(pass) {
-					// nextNode.player = opponent;
-				}
+				result.player = player;
+			}
+			if(simulation) {
+				return result;
+			} else {
+				nextNode = result;
 			}
 		}
 		return nextNode;

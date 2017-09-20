@@ -32,7 +32,7 @@ public class ISMCTS {
 	
 	public Move getMove(int iterations, Phase phase){
 		root = new Node(state.getMyPlayerName(), state.getMap().getMapCopy(), plannedMoves);
-		current = root;		
+		//current = root;		
 		for(int i = 0; i < iterations; i++){
 			//System.out.println("Iteration " + (i+1));
 			// run iteration
@@ -64,7 +64,7 @@ public class ISMCTS {
 				//System.out.println("Got Edge");
 				visitedEdges.add(currentEdge);
 				*/
-				
+				boolean simulation = false;
 				// her
 				Edge currentEdge = null;
 				current.setDeterminization(determ);
@@ -73,7 +73,7 @@ public class ISMCTS {
 				if(hasExpanded) {
 					// simulation
 					currentEdge = current.getSimulationEdge();
-					
+					simulation = true;
 				} else {
 					if(current.isFullyExpanded()) {
 						// selection
@@ -100,7 +100,7 @@ public class ISMCTS {
 					//System.out.println(currentEdge.player + " " + currentEdge.move.getClass());
 					determ.playOutMove(currentEdge.move);
 				}
-				current = currentEdge.getNode(order);
+				current = currentEdge.getNode(order, simulation);
 				if(currentEdge.pass){
 					current.player = determ.getOtherPlayer(currentEdge.player);
 				} 
@@ -120,11 +120,12 @@ public class ISMCTS {
 				e.backPropogate(reward, winner);
 			}
 			determ = null;
+		//	System.out.println("Depth " + depth);
 		}
 		//System.out.println("possible moves " + root.edges.size());
 		Move best = root.getBestEdge(state.getMyPlayerName()).move;
 		//Move best = root.getMostVisitedEdge().move;
-	//	Move best = root.getBestAverageEdge().move;
+		//Move best = root.getBestAverageEdge().move;
 		//System.out.println(best);
 		
 		//deconstruct();

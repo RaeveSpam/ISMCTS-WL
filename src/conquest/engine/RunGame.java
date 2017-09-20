@@ -737,11 +737,45 @@ public class RunGame
 		bot2.order = true;
 	//	matchedTest(bot1, bot2, "new" + bot1.ITERATIONS + "new" + bot2.ITERATIONS, config);
 		
-		ISMCTSBot bot = new ISMCTS_POMBot();
+		ISMCTSBot bot = new ISMCTSBot();
+		bot.ITERATIONS = 5;
+		bot.order = true;
+		//speedTest(bot, "newSpeedTest", config);
+		
+		bot = new ISMCTSBot();
 		bot.ITERATIONS = 10;
 		bot.order = true;
-		speedTest(bot, "newISMCTS_One", config);
+		//speedTest(bot, "newSpeedTest", config);
 	
+		bot = new ISMCTSBot();
+		bot.ITERATIONS = 15;
+		bot.order = true;
+		//speedTest(bot, "newSpeedTest", config);
+	
+		ISMCTSBot pom = new ISMCTS_POMBot();
+		pom.ITERATIONS = 5;
+		pom.order = true;
+	//	speedTest(pom, "newSpeedTestPOM", config);
+	
+		pom = new ISMCTS_POMBot();
+		pom.ITERATIONS = 10;
+		pom.order = true;
+	//	speedTest(pom, "newSpeedTestPOM", config);
+	
+		pom = new ISMCTS_POMBot();
+		pom.ITERATIONS = 15;
+		pom.order = true;
+	//	speedTest(pom, "newSpeedTestPOM", config);
+	
+		// POM v. OrderPOM
+		bot1 = new ISMCTSBot();
+		bot1.ITERATIONS = 15;
+		bot1.order = true;
+		bot2 = new ISMCTS_POMBot();
+		bot2.ITERATIONS = 15;
+		bot2.order = true;
+		matchedTest(bot1, bot2, "MATCHED_new" + bot1.ITERATIONS + "newPOM" + bot2.ITERATIONS, config);
+		
 		
 	/*	Bot bot3 = new BotStarter();
 		RunGame run = new RunGame(config);
@@ -816,7 +850,7 @@ public class RunGame
 	
 	private static void matchedTest(ISMCTSBot bot1, ISMCTSBot bot2, String filename, Config config) {
 		try {
-			int matches = 3;
+			int matches = 5;
 			PrintWriter writer = new PrintWriter(filename + ".csv");
 			writer.println("matches; totalRounds; bot1 regions; bot2 regions; bot1 armies; bot2armies; #bot1wins; #bot2wins; #ties; bot1time; bot2time");
 			
