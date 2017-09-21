@@ -681,19 +681,10 @@ public class RunGame
 		Config config = new Config();
 		
 		config.bot1Init = "internal:conquest.bot.ISMCTSBot";
-		//config.bot1Init = "human";
 		config.bot2Init = "internal:conquest.bot.ISMCTS_POMBot";
-		//config.bot2Init = "internal:conquest.bot.SimpleMCTSBot";
-		//config.bot2Init = "process:java -cp bin conquest.bot.BotStarter";
-		//config.bot2Init = "dir;process:c:/my_bot/;java -cp bin conquest.bot.BotStarter";
-		
 		config.engine.botCommandTimeoutMillis = 24*60*60*1000;
-		
 		config.engine.maxGameRounds = 100;
-		
-		// visualize the map, if turned off, the simulation would run headless 
 		config.visualize = false;
-		
 		// if false, not all human controls would be accessible (when hijacking bots via 'H' or 'J')
 		config.forceHumanVisualization = true;   
 		
