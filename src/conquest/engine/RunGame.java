@@ -740,7 +740,7 @@ public class RunGame
 		ISMCTSBot bot = new ISMCTSBot();
 		bot.ITERATIONS = 5;
 		bot.order = true;
-		//speedTest(bot, "newSpeedTest", config);
+		speedTest(bot, "newServerTest", config);
 		
 		bot = new ISMCTSBot();
 		bot.ITERATIONS = 10;
@@ -774,7 +774,7 @@ public class RunGame
 		bot2 = new ISMCTS_POMBot();
 		bot2.ITERATIONS = 15;
 		bot2.order = true;
-		matchedTest(bot1, bot2, "MATCHED_new" + bot1.ITERATIONS + "newPOM" + bot2.ITERATIONS, config);
+		//matchedTest(bot1, bot2, "MATCHED_new" + bot1.ITERATIONS + "newPOM" + bot2.ITERATIONS, config);
 		
 		
 	/*	Bot bot3 = new BotStarter();
