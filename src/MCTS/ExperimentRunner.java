@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 import conquest.bot.ISMCTSBot;
+import conquest.bot.ISMCTS_POMBot;
 import conquest.engine.RunGame;
 import conquest.engine.RunGame.Config;
 import conquest.engine.RunGame.GameResult;
@@ -72,15 +73,15 @@ public class ExperimentRunner extends Thread {
 	}
 	
 	public static void main(String args[]) {
-		int matches = 10;
+		int matches = 5;
 		for(int i = 0; i < matches; i++) {
 			ISMCTSBot b1 = new ISMCTSBot();
-			b1.ITERATIONS = 5;
+			b1.ITERATIONS = 50;
 			b1.order = true;
-			ISMCTSBot b2 = new ISMCTSBot();
-			b2.ITERATIONS = 5;
+			ISMCTSBot b2 = new ISMCTS_POMBot();
+			b2.ITERATIONS = 50;
 			b2.order = true;
-			String file = "ThreadTest" + i;
+			String file = "50iterations" + i;
 			new ExperimentRunner(b1, b2, file).start();
 		}
 	}
